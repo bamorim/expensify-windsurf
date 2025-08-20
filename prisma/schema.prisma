@@ -77,6 +77,9 @@ model Organization {
     memberships OrganizationMembership[]
     invitations OrganizationInvitation[]
     
+    // Expense categories
+    expenseCategories ExpenseCategory[]
+    
     @@index([createdById])
 }
 
@@ -126,5 +129,21 @@ model OrganizationInvitation {
     
     @@index([email])
     @@index([token])
+    @@index([organizationId])
+}
+
+// Expense Category Model
+model ExpenseCategory {
+    id             String       @id @default(cuid())
+    name           String
+    description    String?
+    createdAt      DateTime     @default(now())
+    updatedAt      DateTime     @updatedAt
+    
+    // Organization relationship
+    organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+    organizationId String
+    
+    @@unique([organizationId, name])
     @@index([organizationId])
 }

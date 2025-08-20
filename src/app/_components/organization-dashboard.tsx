@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { api } from "~/trpc/react";
 import { OrganizationRole } from "@prisma/client";
+import { ExpenseCategoryManagement } from "./expense-category-management";
 
 interface OrganizationDashboardProps {
   organizationId: string;
@@ -116,6 +117,14 @@ export function OrganizationDashboard({
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Expense Categories */}
+      <div className="mb-6">
+        <ExpenseCategoryManagement
+          organizationId={organizationId}
+          userRole={organization.userRole}
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
