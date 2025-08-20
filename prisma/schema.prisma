@@ -10,18 +10,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Post {
-    id        Int      @id @default(autoincrement())
-    name      String
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    createdBy   User   @relation(fields: [createdById], references: [id])
-    createdById String
-
-    @@index([name])
-}
-
 // Necessary for Next auth
 model Account {
     id                       String  @id @default(cuid())
@@ -58,7 +46,11 @@ model User {
     image         String?
     accounts      Account[]
     sessions      Session[]
-    posts         Post[]
+    
+    // Organization relationships
+    memberships   OrganizationMembership[]
+    invitations   OrganizationInvitation[]
+    createdOrganizations Organization[] @relation("OrganizationCreator")
 }
 
 model VerificationToken {
@@ -67,4 +59,72 @@ model VerificationToken {
     expires    DateTime
 
     @@unique([identifier, token])
+}
+
+// Organization Management Models
+model Organization {
+    id          String   @id @default(cuid())
+    name        String
+    description String?
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+    
+    // Creator relationship
+    createdBy   User     @relation("OrganizationCreator", fields: [createdById], references: [id])
+    createdById String
+    
+    // Members and invitations
+    memberships OrganizationMembership[]
+    invitations OrganizationInvitation[]
+    
+    @@index([createdById])
+}
+
+enum OrganizationRole {
+    ADMIN
+    MEMBER
+}
+
+model OrganizationMembership {
+    id             String           @id @default(cuid())
+    role           OrganizationRole @default(MEMBER)
+    joinedAt       DateTime         @default(now())
+    
+    // Relationships
+    user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId         String
+    organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+    organizationId String
+    
+    @@unique([userId, organizationId])
+    @@index([organizationId])
+    @@index([userId])
+}
+
+enum InvitationStatus {
+    PENDING
+    ACCEPTED
+    REJECTED
+    EXPIRED
+}
+
+model OrganizationInvitation {
+    id             String           @id @default(cuid())
+    email          String
+    role           OrganizationRole @default(MEMBER)
+    status         InvitationStatus @default(PENDING)
+    token          String           @unique @default(cuid())
+    expiresAt      DateTime
+    createdAt      DateTime         @default(now())
+    updatedAt      DateTime         @updatedAt
+    
+    // Relationships
+    invitedBy      User             @relation(fields: [invitedById], references: [id])
+    invitedById    String
+    organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+    organizationId String
+    
+    @@index([email])
+    @@index([token])
+    @@index([organizationId])
 }
