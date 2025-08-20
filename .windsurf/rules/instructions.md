@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # Default Agent Workflow Behavior
 
 ## Primary Workflow
