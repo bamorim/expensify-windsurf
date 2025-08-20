@@ -51,6 +51,9 @@ model User {
     memberships   OrganizationMembership[]
     invitations   OrganizationInvitation[]
     createdOrganizations Organization[] @relation("OrganizationCreator")
+    
+    // Policy relationships
+    policies      Policy[]
 }
 
 model VerificationToken {
@@ -79,6 +82,9 @@ model Organization {
     
     // Expense categories
     expenseCategories ExpenseCategory[]
+    
+    // Policies
+    policies Policy[]
     
     @@index([createdById])
 }
@@ -144,6 +150,60 @@ model ExpenseCategory {
     organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
     organizationId String
     
+    // Policy relationships
+    policies       Policy[]
+    
     @@unique([organizationId, name])
     @@index([organizationId])
+}
+
+// Policy Management Models
+enum PolicyPeriod {
+    DAILY
+    WEEKLY
+    MONTHLY
+    YEARLY
+}
+
+enum PolicyReviewRule {
+    AUTO_APPROVE
+    MANUAL_REVIEW
+    CONDITIONAL
+}
+
+model Policy {
+    id             String          @id @default(cuid())
+    name           String
+    description    String?
+    
+    // Policy configuration
+    maxAmount      Decimal         @db.Decimal(10, 2)
+    period         PolicyPeriod
+    reviewRule     PolicyReviewRule @default(MANUAL_REVIEW)
+    
+    // Conditional review settings (when reviewRule is CONDITIONAL)
+    autoApproveThreshold Decimal?  @db.Decimal(10, 2)
+    
+    // Policy scope - either organization-wide or user-specific
+    isUserSpecific Boolean         @default(false)
+    
+    // Timestamps
+    createdAt      DateTime        @default(now())
+    updatedAt      DateTime        @updatedAt
+    
+    // Relationships
+    organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+    organizationId String
+    
+    category       ExpenseCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+    categoryId     String
+    
+    // User-specific policy (optional)
+    user           User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId         String?
+    
+    @@unique([organizationId, categoryId, userId]) // Ensures one policy per org/category/user combination
+    @@index([organizationId])
+    @@index([categoryId])
+    @@index([userId])
 }

@@ -8,11 +8,12 @@ export default async function OrganizationsLayout({
   params,
 }: {
   children: React.ReactNode;
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }) {
   const session = await auth();
+  const { id } = await params;
 
   if (!session) {
     redirect("/api/auth/signin");
@@ -32,7 +33,7 @@ export default async function OrganizationsLayout({
                 ExpenseApp
               </Link>
               <div className="h-4 w-px bg-gray-300" />
-              <OrganizationSwitcher organizationId={params.id} />
+              <OrganizationSwitcher organizationId={id} />
             </div>
             <Link
               href="/api/auth/signout"
